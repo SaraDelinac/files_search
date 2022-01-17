@@ -1,0 +1,93 @@
+#!/bin/bash
+
+# FUNCTION
+getPhrase(){
+    read -p "Please type your phrase: " phrase
+
+    size=${#phrase}
+    while [ "$size" -lt 3 ];
+    do
+	read -p "The phrase is too short. Please type your phrase: " phrase
+	size=${#phrase}
+    done
+}
+
+# FUNCTION 
+getFile(){
+
+    local namefile=$(basename "$myfile")
+
+    catch=$(grep -in "$phrase" "$myfile")
+
+    if [ ! -z "$catch" ]; then
+	cp "$myfile" searchresults/"$namefile"
+	local occuren=`echo "$catch" | wc -l`
+	echo "number of occurences in file $namefile : $occuren "
+	echo "---------------------------" >> searchresults/"$namefile"
+       	echo "Your phrase was found in lines:" >> searchresults/"$namefile"
+	echo "$catch" >> searchresults/"$namefile"
+	return 0
+    fi
+    
+    return 1
+}
+
+# FUNCTION
+searchPhrase(){
+
+#check if directory is empty
+
+for myfile in $fold/*;
+do
+    
+    if [ -f "$myfile" ]; then
+	getFile "$phrase" "$myfile"
+	outcome=`getFile "$phrase" "$myfile"| echo $?`
+    fi
+    
+    if [ "$outcome" == 0 ];then
+	found="T"
+    fi
+    
+done
+}
+
+
+#PROGRAM
+
+if [ -d searchresults ];then
+    rm -r searchresults;
+fi
+    
+mkdir ./searchresults
+
+getPhrase
+
+for fold in $(find . -type d);
+do
+    namefold=$(basename "$fold")
+
+    if [ "$namefold" = "searchresults" ];then
+	continue
+    fi
+    
+    if [ "$fold" = . ];then
+	echo "-------------- current folder : ------------- "
+
+    else
+	echo "-------------- folder: $namefold ------------- "
+    fi
+    
+    searchPhrase "$phrase" "$fold"
+    
+    if [ "$found" != "T" ]; then
+	echo "no results"
+    fi
+    unset found
+ 
+done
+
+
+
+
+  
